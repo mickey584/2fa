@@ -197,6 +197,25 @@
     const DIGITS = 6;
     let lastCounter = null;
 
+    function getSecretFromUrl() {
+      // 更推荐：xxx.com/#JBSWY3DPEHPK3PXP
+      // 也支持：xxx.com/JBSWY3DPEHPK3PXP
+      const hashSecret = decodeURIComponent(location.hash.replace(/^#/, "").trim());
+      if (hashSecret) return hashSecret;
+
+      const path = location.pathname
+        .split("/")
+        .filter(Boolean)
+        .pop();
+
+      // 兼容 GitHub Pages 项目路径 /2fa/，避免把 2fa 当成密钥
+      if (!path || path.toLowerCase() === "2fa" || path.toLowerCase() === "index.html") {
+        return "";
+      }
+
+      return decodeURIComponent(path.trim());
+    }
+
     function extractSecret(input) {
       let value = input.trim();
 
@@ -341,6 +360,11 @@
       lastCounter = null;
       secretInput.focus();
     });
+
+    const urlSecret = getSecretFromUrl();
+    if (urlSecret) {
+      secretInput.value = urlSecret;
+    }
 
     setInterval(() => updateCode(false), 300);
     updateCode(true);
