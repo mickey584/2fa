@@ -412,6 +412,12 @@
 
     .error.success { color: var(--green); }
 
+    /* 错误提示为空时不占高度：避免输入框和下方三个图标之间出现大块空白 */
+    .error:empty {
+      min-height: 0;
+      margin-top: 0;
+    }
+
     /* 三列特性带 */
     .features {
       width: 100%;
@@ -503,14 +509,20 @@
       .clock-label { display: none; }
       .clock-time { font-size: 12.5px; }
 
-      /* 手机上减少主区域上下留白，避免需要下拉才能看到完整内容 */
-      .stage { padding: 8px 18px 12px; }
+      /* 手机上减少主区域上下留白，但保留 grid 布局，避免倒计时圆环被异常拉伸 */
+      .stage {
+        padding: 8px 18px 10px;
+        align-content: start;
+        justify-items: center;
+        row-gap: 6px;
+      }
 
       .decor-rings span:nth-child(1) { width: 400px; height: 400px; }
       .decor-rings span:nth-child(2) { width: 320px; height: 320px; }
       .decor-rings span:nth-child(3) { width: 250px; height: 250px; }
 
-      .panel { gap: 8px; max-width: 360px; }
+      /* 手机端缩短验证码卡片和密钥输入框之间的距离 */
+      .panel { gap: 6px; max-width: 360px; }
 
       .code-card {
         /* 缩小卡片内边距，给手机端留出更多垂直空间 */
@@ -525,7 +537,8 @@
       .code-stage { width: 230px; height: 230px; }
       .code-inner { width: 175px; }
       .code { font-size: 38px; letter-spacing: -0.5px; }
-      .countdown { font-size: 15px; margin-top: 12px; }
+      /* 倒计时只缩小外边距，不改变圆环容器尺寸，避免被撑大 */
+      .countdown { font-size: 15px; margin-top: 8px; }
       .copy-row {
         margin-top: 18px;
         padding-top: 14px;
@@ -537,9 +550,8 @@
       /* 手机端仍保持 16px，防止输入密钥时页面自动放大 */
       input { padding: 12px 16px; font-size: 16px; }
 
-      /* 特性带在手机上保留三列，但更紧凑 */
-      /* 手机端进一步压缩输入框和三个图标之间的距离 */
-      .features { margin-top: 8px; gap: 8px; max-width: 360px; }
+      /* 特性带在手机上保留三列，但更贴近输入框 */
+      .features { margin-top: 2px; gap: 8px; max-width: 360px; }
       .feature { padding: 12px 8px; border-radius: 12px; }
       .feature-icon { width: 24px; height: 24px; margin-bottom: 6px; }
       .feature-icon svg { width: 18px; height: 18px; }
