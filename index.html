@@ -1,38 +1,45 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
+<!-- saved from url=(0017)https://lbyz.app/ -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
   <!-- 允许垂直滚动但禁止双击放大、捏合缩放 -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>两步验证</title>
   <style>
-    /* ====== 设计令牌 ====== */
+    /* ====== Liquid Glass Design System ====== */
     :root {
-      --green: #1f5f48;
-      --green-bright: #2a8b66;
-      --green-deep: #163f30;
-      --warn: #d97a1f;
-      --crit: #c0392b;
+      --bg: #eef3ff;
+      --ink: #101624;
+      --ink-soft: rgba(16, 22, 36, 0.74);
+      --ink-dim: rgba(16, 22, 36, 0.52);
+      --ink-mute: rgba(16, 22, 36, 0.36);
 
-      --ink: #1a2620;
-      --ink-soft: #3a4a42;
-      --ink-dim: #6a7a72;
-      --ink-mute: #9aa6a0;
+      --blue: #42a5ff;
+      --purple: #8f5cff;
+      --orange: #ff9b42;
+      --green: #21a67a;
+      --warn: #e88920;
+      --crit: #e04452;
 
-      --glass: rgba(255, 255, 255, 0.55);
-      --glass-strong: rgba(255, 255, 255, 0.75);
-      --glass-soft: rgba(255, 255, 255, 0.35);
-      --glass-line: rgba(255, 255, 255, 0.6);
-      --glass-line-soft: rgba(255, 255, 255, 0.4);
+      --glass: rgba(255, 255, 255, 0.42);
+      --glass-strong: rgba(255, 255, 255, 0.62);
+      --glass-soft: rgba(255, 255, 255, 0.26);
+      --glass-line: rgba(255, 255, 255, 0.72);
+      --glass-shadow: rgba(38, 53, 86, 0.18);
+
+      --mx: 0px;
+      --my: 0px;
+      --rx: 0deg;
+      --ry: 0deg;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ====== 全局：禁止左右滑动，允许上下（兜底） ====== */
     html {
-      height: 100%;
-      overflow-x: hidden;        /* 禁止左右 */
-      overflow-y: auto;          /* 允许上下 */
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      background: var(--bg);
     }
 
     body {
@@ -41,510 +48,365 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro SC",
         "PingFang SC", "Helvetica Neue", "Microsoft YaHei", "微软雅黑", sans-serif;
       color: var(--ink);
-      overflow-x: hidden;        /* 禁止左右滑动 */
+      overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
-      overscroll-behavior-x: none; /* 禁止 iOS 边缘弹性左右滚 */
-      touch-action: pan-y;       /* 只允许垂直方向触摸滑动 */
-      background: #f0ede4;
+      overscroll-behavior-x: none;
+      touch-action: pan-y;
       position: relative;
-    }
-
-    /* ====== 背景渐变光斑：让毛玻璃有色彩折射 ====== */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: 0;
       background:
-        radial-gradient(ellipse 70% 60% at 12% 18%, rgba(42, 139, 102, 0.45), transparent 60%),
-        radial-gradient(ellipse 60% 50% at 88% 85%, rgba(217, 122, 31, 0.28), transparent 60%),
-        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255, 220, 180, 0.45), transparent 70%),
-        radial-gradient(ellipse 40% 30% at 90% 15%, rgba(192, 57, 43, 0.15), transparent 65%);
-      pointer-events: none;
+        linear-gradient(135deg, #f8fbff 0%, #eef4ff 42%, #fff4ea 100%);
     }
 
-    /* 背景纹理点 */
+    /* ====== 液态彩色光斑层：蓝 / 紫 / 橙，跟随鼠标轻微视差 ====== */
+    .liquid-bg {
+      position: fixed;
+      inset: -12%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      filter: saturate(1.18);
+    }
+
+    .orb {
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      left: var(--x);
+      top: var(--y);
+      border-radius: 999px;
+      background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.84), var(--color) 35%, transparent 70%);
+      opacity: .78;
+      filter: blur(34px);
+      transform: translate3d(calc(var(--mx) * var(--depth)), calc(var(--my) * var(--depth)), 0) scale(1);
+      animation: floatOrb var(--speed) ease-in-out infinite alternate;
+      mix-blend-mode: multiply;
+    }
+
+    .orb-blue { --size: 46vmax; --x: -12%; --y: 2%; --color: rgba(66, 165, 255, .60); --depth: .34; --speed: 12s; }
+    .orb-purple { --size: 40vmax; --x: 48%; --y: 7%; --color: rgba(143, 92, 255, .52); --depth: -.22; --speed: 15s; }
+    .orb-orange { --size: 38vmax; --x: 58%; --y: 58%; --color: rgba(255, 155, 66, .54); --depth: .26; --speed: 14s; }
+
+    @keyframes floatOrb {
+      from { translate: -2% 1%; }
+      to { translate: 3% -3%; }
+    }
+
     body::after {
       content: "";
       position: fixed;
       inset: 0;
-      z-index: 0;
-      background-image: radial-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px);
-      background-size: 22px 22px;
-      mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
-      -webkit-mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+      z-index: 1;
       pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,.18), rgba(255,255,255,.06)),
+        radial-gradient(rgba(255,255,255,.45) 1px, transparent 1px);
+      background-size: auto, 24px 24px;
+      mask-image: radial-gradient(circle at center, black 20%, transparent 82%);
+      -webkit-mask-image: radial-gradient(circle at center, black 20%, transparent 82%);
     }
 
-    /* ====== 顶部固定毛玻璃条 ====== */
+    /* ====== 顶部液态玻璃条 ====== */
     .topbar {
-      position: fixed;            /* 固定 */
-      top: 0;
-      left: 0;
-      right: 0;
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top));
+      left: 50%;
       z-index: 100;
+      width: min(calc(100% - 32px), 680px);
+      transform: translateX(-50%);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 12px 20px;
-      background: rgba(31, 95, 72, 0.55);
-      color: rgba(255, 255, 255, 0.98);
-      font-size: 13.5px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.22);
-      backdrop-filter: blur(22px) saturate(180%);
-      -webkit-backdrop-filter: blur(22px) saturate(180%);
-      box-shadow: 0 6px 20px rgba(22, 63, 48, 0.18);
+      padding: 11px 18px;
+      color: rgba(16, 22, 36, 0.78);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.25px;
+      border: 1px solid var(--glass-line);
+      border-radius: 999px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.70), rgba(255,255,255,.28)),
+        radial-gradient(circle at 20% 0%, rgba(66,165,255,.30), transparent 35%),
+        radial-gradient(circle at 75% 100%, rgba(255,155,66,.24), transparent 40%);
+      backdrop-filter: blur(26px) saturate(190%);
+      -webkit-backdrop-filter: blur(26px) saturate(190%);
+      box-shadow: 0 18px 46px -30px var(--glass-shadow), inset 0 1px rgba(255,255,255,.78);
     }
 
-    .topbar svg {
-      width: 14px;
-      height: 14px;
-      stroke-width: 2.2;
-    }
+    .topbar svg { width: 14px; height: 14px; stroke-width: 2.2; color: var(--purple); }
 
-    /* ====== 主舞台：占满整屏，给顶部条留出空间 ====== */
+    /* ====== 12 栏响应式舞台 ====== */
     .stage {
       position: relative;
       z-index: 2;
       min-height: 100dvh;
       min-height: 100vh;
-      padding: 56px 16px 16px;    /* 顶部 56px 留给固定 topbar */
-      display: flex;
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 92px clamp(16px, 4vw, 34px) 34px;
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
       align-items: center;
-      justify-content: center;
+      gap: 22px;
+      perspective: 1200px;
     }
 
-    /* ====== 大毛玻璃卡片：包裹所有内容 ====== */
+    /* ====== 主卡片：真实 liquid glass，透出背景色 ====== */
     .glass-card {
+      grid-column: 4 / span 6;
       width: 100%;
-      max-width: 440px;
-      padding: 20px 22px 18px;
-      background: var(--glass);
+      max-width: 520px;
+      margin: 0 auto;
+      padding: clamp(20px, 3vw, 34px);
+      display: grid;
+      gap: 18px;
+      border-radius: 34px;
       border: 1px solid var(--glass-line);
-      border-radius: 28px;
-      backdrop-filter: blur(28px) saturate(180%);
-      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.66), rgba(255,255,255,.24)),
+        radial-gradient(circle at calc(35% + var(--mx) * .08) calc(0% + var(--my) * .08), rgba(66,165,255,.26), transparent 38%),
+        radial-gradient(circle at calc(85% - var(--mx) * .06) calc(100% - var(--my) * .06), rgba(255,155,66,.24), transparent 34%),
+        radial-gradient(circle at 72% 18%, rgba(143,92,255,.19), transparent 32%);
+      backdrop-filter: blur(34px) saturate(210%);
+      -webkit-backdrop-filter: blur(34px) saturate(210%);
       box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.7) inset,
-        0 20px 50px -20px rgba(31, 95, 72, 0.28),
-        0 4px 20px -4px rgba(60, 80, 70, 0.12);
-      animation: fadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+        inset 0 1px 0 rgba(255,255,255,.90),
+        inset 0 -1px 0 rgba(255,255,255,.22),
+        0 28px 80px -38px rgba(38, 53, 86, .52),
+        0 8px 26px -18px rgba(38, 53, 86, .30);
+      transform: rotateX(var(--rx)) rotateY(var(--ry));
+      animation: fadeUp .75s cubic-bezier(.2,.8,.2,1) both;
+      position: relative;
+      overflow: hidden;
     }
+
+    .glass-card::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      pointer-events: none;
+      background: linear-gradient(115deg, rgba(255,255,255,.62), transparent 28%, rgba(255,255,255,.16) 56%, transparent 78%);
+      opacity: .82;
+    }
+
+    .glass-card > * { position: relative; z-index: 1; }
 
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(18px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* ====== 卡片内顶部：左 logo / 右时钟 ====== */
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      font-weight: 600;
-      font-size: 16px;
-      color: var(--ink);
-      letter-spacing: -0.2px;
-    }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 760; letter-spacing: -0.35px; }
 
     .brand-mark {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--green-bright) 0%, var(--green) 60%, var(--green-deep) 100%);
-      display: grid;
-      place-items: center;
-      color: #fff;
-      font-weight: 700;
-      font-size: 11px;
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.25) inset,
-        0 4px 10px -2px rgba(31, 95, 72, 0.5);
+      width: 36px; height: 36px; border-radius: 13px;
+      display: grid; place-items: center;
+      color: white; font-size: 13px; font-weight: 800;
+      background: linear-gradient(135deg, var(--blue), var(--purple) 54%, var(--orange));
+      box-shadow: inset 0 1px rgba(255,255,255,.35), 0 12px 26px -16px var(--purple);
     }
 
-    /* 时钟胶囊 */
-    .clock {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 5px 11px 5px 9px;
-      background: var(--glass-strong);
-      border: 1px solid var(--glass-line);
-      border-radius: 999px;
-      font-size: 12px;
-      color: var(--ink-soft);
+    .clock, .secret-input, .feature {
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.64), rgba(255,255,255,.26));
+      border: 1px solid rgba(255,255,255,.58);
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+      box-shadow: inset 0 1px rgba(255,255,255,.70), 0 10px 24px -22px rgba(16,22,36,.5);
     }
 
-    .clock-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 0 2.5px rgba(31, 95, 72, 0.18);
-      animation: pulse 2s ease-in-out infinite;
+    .clock { display: flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; font-size: 12px; color: var(--ink-soft); }
+    .clock-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(33,166,122,.14); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity:.52; } 50% { opacity:1; } }
+    .clock-time { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+    .code-section { display: flex; flex-direction: column; align-items: center; padding: 6px 0 2px; }
+    .code-label { font-size: 11px; letter-spacing: 2.4px; color: var(--ink-dim); text-transform: uppercase; font-weight: 800; margin-bottom: 18px; }
+    .code-stage { position: relative; width: clamp(196px, 34vw, 260px); height: clamp(196px, 34vw, 260px); display: grid; place-items: center; cursor: pointer; user-select: none; transition: transform .16s ease; border-radius: 50%; }
+    .code-stage:hover { transform: scale(1.012); }
+    .code-stage:active { transform: scale(.988); }
+    .ring { position:absolute; inset:0; width:100%; height:100%; transform: rotate(-90deg); pointer-events:none; }
+    .ring circle { fill:none; stroke-width:5; }
+    .ring-track { stroke: rgba(16,22,36,.10); }
+    .ring-progress { stroke:url(#gradNormal); stroke-linecap:round; transition: stroke-dashoffset .95s linear; filter: drop-shadow(0 8px 12px rgba(66,165,255,.22)); }
+    .ring-progress.warn { stroke:url(#gradWarn); }
+    .ring-progress.crit { stroke:url(#gradCrit); }
+    .code-inner { width: 80%; text-align:center; }
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 850; font-size: clamp(38px, 6vw, 52px); letter-spacing: -1.8px; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1; transition: opacity .25s ease; text-shadow: 0 1px rgba(255,255,255,.55); }
+    .code.placeholder { color: var(--ink-mute); font-weight: 650; letter-spacing: 5px; }
+    .code.flash { animation: codeFlash .5s ease; }
+    @keyframes codeFlash { 0% { opacity:0; transform:translateY(5px); filter:blur(4px); } 100% { opacity:1; transform:translateY(0); filter:blur(0); } }
+    .countdown { margin-top: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 15px; color: var(--ink-soft); font-variant-numeric: tabular-nums; font-weight: 760; transition: color .35s ease; }
+    .countdown.warn { color: var(--warn); } .countdown.crit { color: var(--crit); }
+    .copy-hint { margin-top: 14px; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-dim); font-weight:650; transition:color .25s ease; }
+    .copy-hint.success { color: var(--green); font-weight: 760; } .copy-hint svg { width:13px; height:13px; stroke-width:2; }
+    .ripple { position:absolute; border-radius:50%; background: radial-gradient(circle, rgba(66,165,255,.55), rgba(143,92,255,.22)); opacity:.35; transform:translate(-50%,-50%) scale(0); pointer-events:none; animation:ripple .7s ease-out forwards; }
+    @keyframes ripple { to { transform:translate(-50%,-50%) scale(8); opacity:0; } }
+
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.80), rgba(143,92,255,.22), transparent); }
+
+    .input-section { display:flex; flex-direction:column; gap:8px; }
+    .input-header { display:flex; justify-content:space-between; align-items:center; font-size:11px; letter-spacing:1.4px; color:var(--ink-dim); font-weight:800; text-transform:uppercase; }
+    .clear-btn { appearance:none; background:rgba(255,255,255,.22); border:1px solid rgba(255,255,255,.45); color:var(--ink-dim); font-size:11px; cursor:pointer; padding:5px 9px; border-radius:999px; font-weight:700; transition: all .18s ease; font-family:inherit; letter-spacing:.5px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    .clear-btn:hover, .clear-btn:active { color:var(--purple); background:rgba(255,255,255,.48); }
+    .secret-input { width:100%; padding:14px 16px; border-radius:16px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:16px; letter-spacing:.5px; color:var(--ink); outline:none; font-weight:600; text-align:center; transition:border-color .2s, box-shadow .2s, background .2s; }
+    .secret-input::placeholder { color: var(--ink-mute); font-weight: 500; }
+    .secret-input:focus { border-color: rgba(143,92,255,.58); background: rgba(255,255,255,.72); box-shadow: 0 0 0 4px rgba(143,92,255,.13), inset 0 1px rgba(255,255,255,.8); }
+    .message { font-size: 12px; text-align:center; color:var(--crit); font-weight:600; min-height:15px; }
+    .message.success { color: var(--green); } .message:empty { min-height: 0; }
+
+    .features { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
+    .feature { padding: 13px 8px; border-radius: 18px; text-align:center; transition: transform .18s, background .18s; }
+    .feature:hover { transform: translateY(-2px); background: rgba(255,255,255,.42); }
+    .feature:active { transform: scale(.98); }
+    .feature-icon { width:24px; height:24px; margin:0 auto 6px; display:grid; place-items:center; color:var(--purple); }
+    .feature-content { display: flex; flex-direction: column; align-items: center; }
+    .feature-icon svg { width:18px; height:18px; stroke-width:1.9; }
+    .feature-title { font-size: 12px; font-weight: 760; color: var(--ink); }
+    .feature-desc { font-size: 10px; color: var(--ink-dim); margin-top: 2px; font-weight: 560; }
+
+    /* ====== 响应式：12栏 -> 6+6 -> 单列；按钮自动撑满 ====== */
+    @media (max-width: 1024px) {
+      .stage { grid-template-columns: repeat(6, minmax(0, 1fr)); padding-top: 88px; }
+      .glass-card { grid-column: 1 / -1; max-width: 560px; }
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 0.5; }
-      50%      { opacity: 1; }
-    }
+    @media (max-width: 768px) {
+      .topbar {
+        width: min(calc(100% - 24px), 560px);
+        top: max(10px, env(safe-area-inset-top));
+        padding: 11px 16px;
+      }
 
-    .clock-time {
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-      font-weight: 600;
-      color: var(--ink);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 0.3px;
-    }
-
-    /* ====== 验证码圆环区 ====== */
-    .code-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 4px 0;
-    }
-
-    .code-label {
-      font-size: 10.5px;
-      letter-spacing: 1.8px;
-      color: var(--ink-dim);
-      text-transform: uppercase;
-      font-weight: 600;
-      margin-bottom: 14px;
-    }
-
-    /* 圆环 + 数字容器 */
-    .code-stage {
-      position: relative;
-      width: clamp(180px, 56vw, 220px);
-      height: clamp(180px, 56vw, 220px);
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      user-select: none;
-      -webkit-user-select: none;
-      transition: transform 0.15s ease;
-      border-radius: 50%;
-    }
-
-    .code-stage:active { transform: scale(0.985); }
-
-    .ring {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      transform: rotate(-90deg);
-      pointer-events: none;
-    }
-
-    .ring circle {
-      fill: none;
-      stroke-width: 5;
-    }
-
-    .ring-track { stroke: rgba(31, 95, 72, 0.14); }
-
-    .ring-progress {
-      stroke: url(#gradNormal);
-      stroke-linecap: round;
-      transition: stroke-dashoffset 0.95s linear;
-      filter: drop-shadow(0 2px 6px rgba(31, 95, 72, 0.3));
-    }
-
-    .ring-progress.warn { stroke: url(#gradWarn); }
-    .ring-progress.crit { stroke: url(#gradCrit); }
-
-    .code-inner {
-      width: 78%;
-      text-align: center;
-    }
-
-    .code {
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-      font-weight: 700;
-      font-size: clamp(34px, 9vw, 42px);
-      letter-spacing: -1px;
-      color: var(--ink);
-      font-variant-numeric: tabular-nums;
-      line-height: 1;
-      transition: opacity 0.25s ease;
-    }
-
-    .code.placeholder {
-      color: var(--ink-mute);
-      font-weight: 600;
-      letter-spacing: 4px;
-    }
-
-    .code.flash { animation: codeFlash 0.5s ease; }
-
-    @keyframes codeFlash {
-      0%   { opacity: 0; transform: translateY(4px); filter: blur(3px); }
-      100% { opacity: 1; transform: translateY(0);   filter: blur(0); }
-    }
-
-    .countdown {
-      margin-top: 10px;
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-      font-size: 14px;
-      color: var(--ink-soft);
-      font-variant-numeric: tabular-nums;
-      font-weight: 600;
-      transition: color 0.4s ease;
-    }
-
-    .countdown.warn { color: var(--warn); }
-    .countdown.crit { color: var(--crit); }
-
-    .copy-hint {
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11.5px;
-      color: var(--ink-dim);
-      font-weight: 500;
-      transition: color 0.25s ease;
-    }
-
-    .copy-hint.success { color: var(--green); font-weight: 600; }
-    .copy-hint svg { width: 12px; height: 12px; stroke-width: 2; }
-
-    /* 复制水波纹 */
-    .ripple {
-      position: absolute;
-      border-radius: 50%;
-      background: var(--green);
-      opacity: 0.2;
-      transform: translate(-50%, -50%) scale(0);
-      pointer-events: none;
-      animation: ripple 0.7s ease-out forwards;
-    }
-
-    @keyframes ripple {
-      to { transform: translate(-50%, -50%) scale(8); opacity: 0; }
-    }
-
-    /* ====== 渐变分隔线 ====== */
-    .divider {
-      height: 1px;
-      background: linear-gradient(90deg,
-        transparent,
-        rgba(31, 95, 72, 0.2) 20%,
-        rgba(31, 95, 72, 0.2) 80%,
-        transparent);
-    }
-
-    /* ====== 输入区 ====== */
-    .input-section {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .input-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 10.5px;
-      letter-spacing: 1.2px;
-      color: var(--ink-dim);
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .clear-btn {
-      background: none;
-      border: none;
-      color: var(--ink-mute);
-      font-size: 10.5px;
-      cursor: pointer;
-      padding: 0;
-      font-weight: 500;
-      transition: color 0.15s ease;
-      font-family: inherit;
-      letter-spacing: 0.5px;
-    }
-
-    .clear-btn:hover, .clear-btn:active { color: var(--green); }
-
-    .secret-input {
-      width: 100%;
-      padding: 11px 14px;
-      background: var(--glass-strong);
-      border: 1px solid var(--glass-line-soft);
-      border-radius: 11px;
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-      font-size: 16px;            /* iOS 防缩放 */
-      letter-spacing: 0.5px;
-      color: var(--ink);
-      outline: none;
-      font-weight: 500;
-      text-align: center;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-    }
-
-    .secret-input::placeholder {
-      color: var(--ink-mute);
-      font-weight: 400;
-    }
-
-    .secret-input:focus {
-      border-color: var(--green);
-      background: rgba(255, 255, 255, 0.85);
-      box-shadow: 0 0 0 3px rgba(31, 95, 72, 0.12);
-    }
-
-    .message {
-      font-size: 11px;
-      text-align: center;
-      color: var(--crit);
-      font-weight: 500;
-      min-height: 13px;
-    }
-
-    .message.success { color: var(--green); }
-    .message:empty { min-height: 0; }
-
-    /* ====== 三列特性带 ====== */
-    .features {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .feature {
-      padding: 10px 6px;
-      background: var(--glass-soft);
-      border: 1px solid var(--glass-line-soft);
-      border-radius: 12px;
-      text-align: center;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      transition: background 0.2s, transform 0.2s;
-    }
-
-    .feature:active { transform: scale(0.97); }
-
-    .feature-icon {
-      width: 20px;
-      height: 20px;
-      margin: 0 auto 4px;
-      display: grid;
-      place-items: center;
-      color: var(--green);
-    }
-
-    .feature-icon svg { width: 16px; height: 16px; stroke-width: 1.8; }
-
-    .feature-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--ink);
-    }
-
-    .feature-desc {
-      font-size: 9.5px;
-      color: var(--ink-dim);
-      margin-top: 1px;
-    }
-
-    /* ====== 桌面端：放大圆环和字号 ====== */
-    @media (min-width: 600px) {
-      .stage { padding: 64px 24px 24px; }
+      .stage {
+        grid-template-columns: 1fr;
+        padding: 82px 16px 24px;
+        align-items: start;
+      }
 
       .glass-card {
-        padding: 28px 32px 24px;
+        grid-column: 1;
+        max-width: none;
+        border-radius: 30px;
+        padding: 24px;
         gap: 18px;
       }
 
-      .brand { font-size: 18px; }
-      .brand-mark { width: 32px; height: 32px; font-size: 13px; }
+      .card-header { align-items: center; }
+      .brand { font-size: 22px; }
+      .brand-mark { width: 44px; height: 44px; border-radius: 15px; font-size: 17px; }
+      .clock { padding: 8px 13px; font-size: 13px; }
 
-      .clock { padding: 6px 13px 6px 10px; font-size: 13px; }
-      .clock-dot { width: 7px; height: 7px; }
+      .code-section { padding-top: 4px; }
+      .code-label { margin-bottom: 16px; }
+      .code-stage { width: min(62vw, 238px); height: min(62vw, 238px); }
+      .code { font-size: clamp(38px, 10vw, 48px); }
+      .countdown { margin-top: 8px; font-size: 16px; }
+      .copy-hint { margin-top: 16px; }
 
-      .code-label { font-size: 12px; margin-bottom: 18px; }
-      .code-stage { width: 240px; height: 240px; }
-      .code { font-size: 46px; }
-      .countdown { font-size: 16px; margin-top: 12px; }
-      .copy-hint { font-size: 12.5px; margin-top: 14px; }
-      .copy-hint svg { width: 13px; height: 13px; }
+      .input-section { gap: 10px; }
+      .input-header {
+        display: grid;
+        grid-template-columns: auto minmax(112px, 1fr);
+        align-items: center;
+        gap: 12px;
+        font-size: 12px;
+        letter-spacing: 1.6px;
+        padding: 0;
+      }
 
-      .input-header { font-size: 11.5px; }
-      .clear-btn { font-size: 11.5px; }
-      .secret-input { padding: 13px 16px; }
-      .message { font-size: 12px; }
+      .clear-btn {
+        width: 100%;
+        height: 42px;
+        padding: 0 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 760;
+        background:
+          linear-gradient(145deg, rgba(255,255,255,.50), rgba(255,255,255,.22));
+        border: 1px solid rgba(255,255,255,.55);
+        box-shadow: inset 0 1px rgba(255,255,255,.72), 0 8px 18px -16px rgba(16,22,36,.45);
+      }
 
-      .feature { padding: 13px 8px; border-radius: 13px; }
-      .feature-icon { width: 22px; height: 22px; margin-bottom: 5px; }
-      .feature-icon svg { width: 18px; height: 18px; }
-      .feature-title { font-size: 11.5px; }
-      .feature-desc { font-size: 10px; }
+      .secret-input {
+        width: 100%;
+        height: 58px;
+        padding: 0 18px;
+        border-radius: 20px;
+        font-size: 17px;
+        line-height: 58px;
+        background:
+          linear-gradient(145deg, rgba(255,255,255,.52), rgba(255,255,255,.22));
+      }
 
-      .spec { font-size: 10.5px; }
-    }
+      .secret-input::placeholder { font-size: 17px; opacity: .72; }
 
-    /* ====== 极小屏幕（高度 ≤ 680px）：进一步压缩 ====== */
-    @media (max-height: 680px) {
-      .topbar { padding: 9px 16px; font-size: 12.5px; }
-      .stage { padding: 46px 14px 12px; }
+      .features {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
 
-      .glass-card {
-        padding: 14px 18px 14px;
-        gap: 10px;
+      .feature {
+        width: 100%;
+        min-height: 88px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 14px;
+        text-align: left;
+        padding: 18px;
         border-radius: 24px;
       }
 
-      .brand { font-size: 14px; gap: 7px; }
-      .brand-mark { width: 24px; height: 24px; font-size: 10px; border-radius: 7px; }
+      .feature-icon {
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
+        margin: 0;
+        border-radius: 15px;
+        background: rgba(255,255,255,.28);
+        box-shadow: inset 0 1px rgba(255,255,255,.60);
+      }
 
-      .clock { padding: 4px 9px 4px 8px; font-size: 11px; gap: 6px; }
-      .clock-time { font-size: 11px; }
-
-      .code-label { font-size: 10px; margin-bottom: 8px; letter-spacing: 1.5px; }
-      .code-stage { width: clamp(150px, 44vw, 180px); height: clamp(150px, 44vw, 180px); }
-      .ring circle { stroke-width: 4; }
-      .countdown { margin-top: 6px; font-size: 12.5px; }
-      .copy-hint { margin-top: 6px; font-size: 11px; }
-
-      .input-section { gap: 4px; }
-      .secret-input { padding: 9px 12px; border-radius: 10px; }
-
-      .features { gap: 5px; }
-      .feature { padding: 7px 4px; border-radius: 9px; }
-      .feature-icon { width: 16px; height: 16px; margin-bottom: 2px; }
-      .feature-icon svg { width: 12px; height: 12px; }
-      .feature-title { font-size: 10px; }
-      .feature-desc { font-size: 8.5px; }
-
-      .spec { font-size: 9px; padding-top: 2px; }
+      .feature-icon svg { width: 22px; height: 22px; }
+      .feature-content { align-items: flex-start; }
+      .feature-title { font-size: 16px; line-height: 1.15; }
+      .feature-desc { margin-top: 4px; font-size: 13px; }
     }
-  </style>
+
+    @media (max-height: 700px) {
+      .stage { padding-top: 70px; padding-bottom: 14px; }
+      .glass-card { gap: 12px; padding: 18px; border-radius: 26px; }
+      .topbar { padding: 9px 14px; font-size: 12px; }
+      .code-label { margin-bottom: 10px; }
+      .code-stage { width: clamp(164px, 42vh, 204px); height: clamp(164px, 42vh, 204px); }
+      .copy-hint { margin-top: 8px; }
+      .features { gap: 7px; }
+      .feature { padding: 9px 7px; border-radius: 14px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .orb, .glass-card, .clock-dot, .code.flash { animation: none !important; }
+      .glass-card { transform: none !important; }
+    }
+</style>
 </head>
 <body>
+
+  <div class="liquid-bg" aria-hidden="true">
+    <span class="orb orb-blue"></span>
+    <span class="orb orb-purple"></span>
+    <span class="orb orb-orange"></span>
+  </div>
 
   <!-- 顶部固定毛玻璃条 -->
   <div class="topbar">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
     </svg>
     <span>本地计算 · 安全无忧</span>
   </div>
@@ -563,7 +425,7 @@
         </div>
         <div class="clock">
           <span class="clock-dot"></span>
-          <span class="clock-time" id="clockTime">--:--:--</span>
+          <span class="clock-time" id="clockTime">14:47:20</span>
         </div>
       </header>
 
@@ -576,33 +438,33 @@
             <!-- 三套渐变 -->
             <defs>
               <linearGradient id="gradNormal" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%"  stop-color="#163f30"/>
-                <stop offset="100%" stop-color="#2a8b66"/>
+                <stop offset="0%" stop-color="#42a5ff"></stop>
+                <stop offset="55%" stop-color="#8f5cff"></stop>
+                <stop offset="100%" stop-color="#21a67a"></stop>
               </linearGradient>
               <linearGradient id="gradWarn" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%"  stop-color="#1f5f48"/>
-                <stop offset="100%" stop-color="#d97a1f"/>
+                <stop offset="0%" stop-color="#8f5cff"></stop>
+                <stop offset="100%" stop-color="#ff9b42"></stop>
               </linearGradient>
               <linearGradient id="gradCrit" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%"  stop-color="#d97a1f"/>
-                <stop offset="100%" stop-color="#c0392b"/>
+                <stop offset="0%" stop-color="#ff9b42"></stop>
+                <stop offset="100%" stop-color="#e04452"></stop>
               </linearGradient>
             </defs>
-            <circle class="ring-track" cx="50" cy="50" r="46"/>
-            <circle class="ring-progress" id="ringProgress" cx="50" cy="50" r="46"
-                    stroke-dasharray="289.03" stroke-dashoffset="0"/>
+            <circle class="ring-track" cx="50" cy="50" r="46"></circle>
+            <circle class="ring-progress warn" id="ringProgress" cx="50" cy="50" r="46" stroke-dasharray="289.03" stroke-dashoffset="0" style="stroke-dashoffset: 192.684;"></circle>
           </svg>
 
           <div class="code-inner">
             <div class="code placeholder" id="code">— — —</div>
-            <div class="countdown" id="countdown">— — s</div>
+            <div class="countdown warn" id="countdown">10 s</div>
           </div>
         </div>
 
         <div class="copy-hint" id="copyHint">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>
           <span id="copyHintText">点击数字复制</span>
         </div>
@@ -617,7 +479,7 @@
           <span>Secret Key</span>
           <button class="clear-btn" id="clearBtn" type="button">清空</button>
         </div>
-        <input class="secret-input" id="secret" autocomplete="off" spellcheck="false" placeholder="在此处输入密钥" />
+        <input class="secret-input" id="secret" autocomplete="off" spellcheck="false" placeholder="在此处输入密钥">
         <div class="message" id="message"></div>
       </section>
 
@@ -626,32 +488,38 @@
         <div class="feature">
           <div class="feature-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
           </div>
-          <div class="feature-title">本地计算</div>
-          <div class="feature-desc">密钥不上传</div>
+          <div class="feature-content">
+            <div class="feature-title">本地计算</div>
+            <div class="feature-desc">密钥不上传</div>
+          </div>
         </div>
         <div class="feature">
           <div class="feature-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
           </div>
-          <div class="feature-title">即时刷新</div>
-          <div class="feature-desc">每 30 秒</div>
+          <div class="feature-content">
+            <div class="feature-title">即时刷新</div>
+            <div class="feature-desc">每 30 秒</div>
+          </div>
         </div>
         <div class="feature">
           <div class="feature-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
           </div>
-          <div class="feature-title">点击复制</div>
-          <div class="feature-desc">一键到剪贴板</div>
+          <div class="feature-content">
+            <div class="feature-title">点击复制</div>
+            <div class="feature-desc">一键到剪贴板</div>
+          </div>
         </div>
       </section>
 
@@ -670,6 +538,32 @@
     const copyHintText = document.getElementById("copyHintText");
     const clearBtn = document.getElementById("clearBtn");
     const clockTimeEl = document.getElementById("clockTime");
+
+    // ====== Liquid Glass 鼠标 / 触摸视差 ======
+    const rootStyle = document.documentElement.style;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function setLiquidParallax(clientX, clientY) {
+      if (reduceMotion) return;
+      const x = (clientX / window.innerWidth - 0.5) * 2;
+      const y = (clientY / window.innerHeight - 0.5) * 2;
+      rootStyle.setProperty("--mx", `${x * 26}px`);
+      rootStyle.setProperty("--my", `${y * 26}px`);
+      rootStyle.setProperty("--rx", `${y * -3.2}deg`);
+      rootStyle.setProperty("--ry", `${x * 3.2}deg`);
+    }
+
+    window.addEventListener("pointermove", (event) => {
+      setLiquidParallax(event.clientX, event.clientY);
+    }, { passive: true });
+
+    window.addEventListener("pointerleave", () => {
+      rootStyle.setProperty("--mx", "0px");
+      rootStyle.setProperty("--my", "0px");
+      rootStyle.setProperty("--rx", "0deg");
+      rootStyle.setProperty("--ry", "0deg");
+    });
+
 
     // ====== 常量 ======
     const PERIOD = 30;
@@ -877,5 +771,6 @@
     setInterval(() => updateCode(false), 250);
     updateCode(true);
   </script>
-</body>
-</html>
+
+
+</body></html>
